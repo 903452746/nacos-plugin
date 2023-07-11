@@ -50,11 +50,16 @@ public class HistoryConfigInfoMapperOracle extends AbstractOracleMapper
 		sqlArgs.add(groupId);
 		sqlArgs.add(tenantId);
 		
-		String sql =
-				"SELECT nid,data_id,group_id,tenant_id,app_name,src_ip,src_user,op_type,gmt_create,gmt_modified FROM his_config_info "
-						+ " WHERE data_id = ? AND group_id = ? AND  tenant_id = NVL(?, '"+ NamespaceUtil.getNamespaceDefaultId() +"') "
-						+ " ORDER BY nid DESC OFFSET " + context.getStartRow() + " ROWS FETCH NEXT " + context
-						.getPageSize() + " ROWS ONLY ";
+		String sql = getDatabaseDialect().getLimitPageSqlWithOffset("SELECT nid,data_id,group_id,tenant_id,app_name,src_ip,src_user,op_type,gmt_create,gmt_modified FROM his_config_info "
+				+ " WHERE data_id = ? AND group_id = ? AND  tenant_id = NVL(?, '"+ NamespaceUtil.getNamespaceDefaultId() +"') "
+				+ " ORDER BY nid" ,context.getStartRow(),context
+				.getPageSize());
+
+
+
+
+//						+" DESC OFFSET " + context.getStartRow() + " ROWS FETCH NEXT " + context
+//						.getPageSize() + " ROWS ONLY ";
 		return new MapperResult(sql, sqlArgs);
 	}
 	

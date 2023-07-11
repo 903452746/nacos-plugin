@@ -24,35 +24,44 @@ import com.alibaba.nacos.plugin.datasource.constants.DatabaseTypeConstant;
  * @author onewe
  */
 public class OracleDatabaseDialect extends AbstractDatabaseDialect {
-	
-	private static final String DEFAULT_NAMESPACE_ID = "PUBLIC";
-	
-	static {
-		NamespaceUtil.namespaceDefaultId = DEFAULT_NAMESPACE_ID;
-	}
 
-	@Override
-	public String getType() {
-		return DatabaseTypeConstant.ORACLE;
-	}
-	
-	@Override
-	public String getLimitTopSqlWithMark(String sql) {
-		return sql + " FETCH FIRST ? ROWS ONLY ";
-	}
-	
-	@Override
-	public String getLimitPageSqlWithMark(String sql) {
-		return sql + " OFFSET ? ROWS FETCH NEXT ? ROWS ONLY ";
-	}
-	
-	@Override
-	public String getLimitPageSqlWithOffset(String sql, int startOffset, int pageSize) {
-		return sql + "  OFFSET " + startOffset + " ROWS FETCH NEXT " + pageSize + " ROWS ONLY ";
-	}
-	
-	@Override
-	public String getLimitPageSql(String sql, int pageNo, int pageSize) {
-		return sql + "  OFFSET " + getPagePrevNum(pageNo, pageSize) + " ROWS FETCH NEXT " + pageSize + " ROWS ONLY ";
-	}
+    private static final String DEFAULT_NAMESPACE_ID = "public";
+
+    static {
+        NamespaceUtil.namespaceDefaultId = DEFAULT_NAMESPACE_ID;
+    }
+
+    @Override
+    public String getType() {
+        return DatabaseTypeConstant.ORACLE;
+    }
+
+    @Override
+    public String getLimitTopSqlWithMark(String sql) {
+        return sql + " AND ROWNUM < ? ";
+    }
+
+    @Override
+    public String getLimitPageSqlWithMark(String sql) {
+        return "SELECT * FROM (  SELECT TMP_PAGE.*, ROWNUM PAGEHELPER_ROW_ID FROM ( " + sql
+                + ") TMP_PAGE) WHERE PAGEHELPER_ROW_ID <= ? AND PAGEHELPER_ROW_ID > ? ";
+
+
+//		return sql + " OFFSET ? ROWS FETCH NEXT ? ROWS ONLY ";
+    }
+
+    @Override
+    public String getLimitPageSqlWithOffset(String sql, int startOffset, int pageSize) {
+        return "SELECT * FROM (  SELECT TMP_PAGE.*, ROWNUM PAGEHELPER_ROW_ID FROM ( " + sql
+                + ") TMP_PAGE) WHERE PAGEHELPER_ROW_ID <= " + startOffset + pageSize + " AND PAGEHELPER_ROW_ID >  " + startOffset;
+//		return sql + "  OFFSET " + startOffset + " ROWS FETCH NEXT " + pageSize + " ROWS ONLY ";
+    }
+
+    @Override
+    public String getLimitPageSql(String sql, int pageNo, int pageSize) {
+        return "SELECT * FROM (  SELECT TMP_PAGE.*, ROWNUM PAGEHELPER_ROW_ID FROM ( " + sql
+                + ") TMP_PAGE) WHERE PAGEHELPER_ROW_ID <= " + pageSize*pageNo  + " AND PAGEHELPER_ROW_ID >  " + getPagePrevNum(pageNo, pageSize);
+
+//        return sql + "  OFFSET " + getPagePrevNum(pageNo, pageSize) + " ROWS FETCH NEXT " + pageSize + " ROWS ONLY ";
+    }
 }
